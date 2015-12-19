@@ -83,10 +83,16 @@ namespace PlasmaDebug.Debugger
 
         public void SendInput(string Command)
         {
-            _streamWriter.WriteLine(Command);
+            input(Command);
         }
 
-        
+        private async void input(string Command)
+        {
+            await Task.Run(() =>
+            {
+                _streamWriter.WriteLine(Command);
+            });
+        }
 
 
         //TODO: Async?
@@ -94,10 +100,10 @@ namespace PlasmaDebug.Debugger
         {
             int LastQueueCount = _readQueue.Count;
             
-            int timeout=DateTime.Now.Millisecond;
+            DateTime timeout=DateTime.Now;
             while (_readQueue.Count == 0) {
                 //Debug.WriteLine(DateTime.Now.Millisecond-timeout);
-                if(DateTime.Now.Millisecond - timeout>60)
+                if(DateTime.Now.Subtract(timeout).TotalMilliseconds>60)
                 {
                     break;
                 }
@@ -125,6 +131,7 @@ namespace PlasmaDebug.Debugger
                     s+= _readQueue.Dequeue();
                     s += "\n";
                 }
+                Console.WriteLine(s);
                 return s;
             }
             else
@@ -136,11 +143,12 @@ namespace PlasmaDebug.Debugger
 
         void BreakAllLines()
         {
+            DeleteAllBreakpoints();
             //SendInput("rbreak ^[^_]");
 
             //All lines
             int i;
-            for(i=0;i<100;i++)
+            for(i=0;i<20;i++)
             {
                 SendInput("break " + i);
             }
@@ -151,6 +159,7 @@ namespace PlasmaDebug.Debugger
         void DeleteAllBreakpoints()
         {
             SendInput("delete");
+            Thread.Sleep(20);
             Console.WriteLine(ReadOutput());
         }
 
@@ -166,8 +175,14 @@ namespace PlasmaDebug.Debugger
                     if(!_user_wanted_break)
                     {
                         SendInput("continue 1");
-                        Console.WriteLine(ReadOutput());
-                        Thread.Sleep(10);
+                        string Output = ReadOutput();
+                        Console.WriteLine(Output);
+                        if(Output=="")
+                        {
+                            SendInput("f");
+                            ReadOutput();
+                        }
+                        Thread.Sleep(20);
                     }
                     else
                     {
