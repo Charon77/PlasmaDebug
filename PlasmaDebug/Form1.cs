@@ -1,4 +1,5 @@
-﻿using System;
+﻿using PlasmaDebug.Debugger;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -14,32 +15,52 @@ namespace PlasmaDebug
 {
     public partial class Form1 : Form
     {
+        IDebugger debugger;
+
+
         public Form1()
         {
+            
             InitializeComponent();
+            debugger = new C_Debugger();
+            debugger.Start();
+
         }
 
-        private void button1_Click(object sender, EventArgs e)
+
+        private void textBox1_TextChanged(object sender, EventArgs e)
         {
-            Console.WriteLine("Hi.");
-
-            ProcessStartInfo _gdbStartInfo = new ProcessStartInfo();
-            _gdbStartInfo.FileName = "gdb.exe";
-            _gdbStartInfo.UseShellExecute = false; //Why?
-            _gdbStartInfo.RedirectStandardOutput = true;
-            _gdbStartInfo.RedirectStandardInput = true;
-            _gdbStartInfo.RedirectStandardError = true;
-            _gdbStartInfo.CreateNoWindow = true;
-            Process p = Process.Start(_gdbStartInfo);
-
-            StreamReader s = p.StandardOutput;
-
-            string str = s.ReadLine();
-            Console.WriteLine(str);
-
-
-
 
         }
+
+        private void textBox1_KeyDown(object sender, KeyEventArgs e)
+        {
+            if(e.KeyData==Keys.Enter)
+            {
+                debugger.SendInput(textBox1.Text);
+                textBox1.Clear();
+                Console.WriteLine(debugger.ReadOutput());
+            }
+        }
+
+        
+
+        private void cmdContinue_Click(object sender, EventArgs e)
+        {
+            debugger.Continue();
+        }
+
+        private void cmdBreak_Click(object sender, EventArgs e)
+        {
+            debugger.Break();
+        }
+
+        private void cmdAttach_Click(object sender, EventArgs e)
+        {
+            int pid;
+            int.TryParse(txtPID.Text, out pid);
+            debugger.Attach(pid);
+        }
+
     }
 }
